@@ -1,13 +1,13 @@
 import { Layout } from "@/components/Layout";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   FilePlus2, SplitSquareHorizontal, Trash2, FileOutput, Minimize2, Droplet, 
   ListOrdered, Lock, Unlock, RotateCw, Image, ImageDown, Wrench, Search,
   GripVertical, ScanLine, Eye, FileText, Presentation, Sheet, Code,
   FileDown, FileUp, ShieldCheck, Crop, Pencil, PenTool, EyeOff,
-  GitCompare, Sparkles, Languages, ArrowRight, Zap, Shield, Globe
+  GitCompare, Sparkles, Languages, ArrowRight, Zap, Shield, Globe, Loader2, Send
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 const categories = ["All", "Organize", "Optimize", "Convert to PDF", "Convert from PDF", "Edit", "Security", "AI"] as const;
 type Category = typeof categories[number];
@@ -65,20 +65,187 @@ const allTools = [
 
 const popularToolIds = ["merge", "compress", "split", "ai-summarize", "translate", "pdf-to-word"];
 
+const exampleQueries = [
+  "I need to combine 3 PDFs into one",
+  "Make my PDF file smaller",
+  "Convert my Word doc to PDF",
+  "I want to translate a PDF to Spanish",
+  "Summarize this document for me",
+  "Remove password from my PDF",
+];
+
+function AISearchBar() {
+  const [query, setQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [aiResults, setAiResults] = useState<{ ids: string[]; message: string } | null>(null);
+  const [showResults, setShowResults] = useState(false);
+  const [placeholder, setPlaceholder] = useState(exampleQueries[0]);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % exampleQueries.length;
+      setPlaceholder(exampleQueries[idx]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const performSearch = useCallback(async (q: string) => {
+    if (q.trim().length < 3) {
+      setAiResults(null);
+      setShowResults(false);
+      return;
+    }
+    setIsSearching(true);
+    setShowResults(true);
+    try {
+      const baseUrl = import.meta.env.BASE_URL || "/";
+      const apiBase = `${window.location.origin}${baseUrl}`.replace(/\/$/, "");
+      const res = await fetch(`${apiBase}/api/pdf/ai-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = await res.json();
+      setAiResults({ ids: data.results || [], message: data.message || "" });
+    } catch {
+      setAiResults(null);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  const handleInputChange = (value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length < 3) {
+      setAiResults(null);
+      setShowResults(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => performSearch(value), 600);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    performSearch(query);
+  };
+
+  const matchedTools = aiResults?.ids
+    ?.map(id => allTools.find(t => t.id === id))
+    .filter(Boolean) || [];
+
+  return (
+    <div ref={searchRef} className="relative max-w-2xl mx-auto mb-8">
+      <form onSubmit={handleSubmit} className="relative">
+        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+          {isSearching ? (
+            <Loader2 className="h-5 w-5 text-primary animate-spin" />
+          ) : (
+            <Sparkles className="h-5 w-5 text-primary/60" />
+          )}
+        </div>
+        <input
+          type="text"
+          placeholder={placeholder}
+          className="flex h-14 w-full rounded-2xl border-2 border-input bg-card pl-13 pr-14 py-2 text-base shadow-lg shadow-black/5 transition-all placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary focus-visible:shadow-primary/10"
+          value={query}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onFocus={() => { if (aiResults && aiResults.ids.length > 0) setShowResults(true); }}
+          data-testid="input-search-tools"
+        />
+        <button
+          type="submit"
+          className="absolute inset-y-0 right-0 pr-4 flex items-center"
+          disabled={isSearching || query.trim().length < 3}
+        >
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+            query.trim().length >= 3
+              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+              : "bg-muted text-muted-foreground"
+          }`}>
+            <Send className="w-4 h-4" />
+          </div>
+        </button>
+      </form>
+
+      {showResults && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-2xl border border-border shadow-xl shadow-black/10 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          {isSearching ? (
+            <div className="flex items-center gap-3 p-5">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <span className="text-sm text-muted-foreground">AI is finding the best tools for you...</span>
+            </div>
+          ) : matchedTools.length > 0 ? (
+            <div>
+              {aiResults?.message && (
+                <div className="px-5 pt-4 pb-2">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <p className="text-sm text-foreground leading-relaxed">{aiResults.message}</p>
+                  </div>
+                </div>
+              )}
+              <div className="px-2 pb-2">
+                {matchedTools.map((tool) => {
+                  if (!tool) return null;
+                  const Icon = tool.icon;
+                  return (
+                    <button
+                      key={tool.id}
+                      onClick={() => {
+                        setShowResults(false);
+                        navigate(tool.path);
+                      }}
+                      className="w-full flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-muted/80 transition-colors text-left group"
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${tool.bg} ${tool.color} group-hover:scale-110 transition-transform`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">{tool.name}</h4>
+                        <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : aiResults ? (
+            <div className="p-5 text-center">
+              <p className="text-sm text-muted-foreground">No matching tools found. Try describing what you want to do differently.</p>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
-  const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("All");
 
   const filteredTools = allTools.filter(tool => {
-    const matchesCategory = activeCategory === "All" || tool.category === activeCategory;
-    const matchesSearch = !search || 
-      tool.name.toLowerCase().includes(search.toLowerCase()) || 
-      tool.description.toLowerCase().includes(search.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return activeCategory === "All" || tool.category === activeCategory;
   });
 
   const popularTools = allTools.filter(t => popularToolIds.includes(t.id));
-  const showHero = !search && activeCategory === "All";
+  const showHero = activeCategory === "All";
 
   return (
     <Layout>
@@ -100,25 +267,12 @@ export default function Home() {
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Merge, split, compress, convert, edit, sign, and transform your PDF files. 
-                Free, fast, and powered by AI.
+                Tell us what you need — our AI will find the perfect tool for you.
               </p>
             </div>
           )}
 
-          <div className="relative max-w-2xl mx-auto mb-8">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <input
-              type="search"
-              placeholder="What do you want to do with your PDF?"
-              className="flex h-14 w-full rounded-2xl border-2 border-input bg-card pl-13 pr-5 py-2 text-base shadow-lg shadow-black/5 transition-all placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary focus-visible:shadow-primary/10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              data-testid="input-search-tools"
-            />
-          </div>
+          <AISearchBar />
 
           {showHero && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl mx-auto mb-8">

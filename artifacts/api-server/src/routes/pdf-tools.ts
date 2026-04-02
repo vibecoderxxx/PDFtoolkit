@@ -25,6 +25,7 @@ function sendError(res: any, status: number, message: string): void {
   res.status(status).json({ error: "Error", message });
 }
 
+
 async function extractPdfText(buffer: Buffer): Promise<string> {
   const pdfParse = (await import("pdf-parse")).default;
   const data = await pdfParse(buffer);
