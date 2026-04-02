@@ -13,16 +13,6 @@ const footerSections = [
     ],
   },
   {
-    title: "RESOURCES",
-    links: [
-      { label: "PDF Toolkit Desktop", href: "/desktop" },
-      { label: "PDF Toolkit Mobile", href: "/mobile" },
-      { label: "PDF Toolkit Sign", href: "/sign-feature" },
-      { label: "PDF Toolkit API", href: "/developer-api" },
-      { label: "Image Tools", href: "/image-tools" },
-    ],
-  },
-  {
     title: "SOLUTIONS",
     links: [
       { label: "Business", href: "/business" },
@@ -53,7 +43,7 @@ export function Footer() {
   return (
     <footer className="bg-[#2d2d2d] text-gray-300 mt-12">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
           {footerSections.map((section) => (
             <div key={section.title}>
               <h3 className="text-white font-semibold text-sm tracking-wider mb-4">
