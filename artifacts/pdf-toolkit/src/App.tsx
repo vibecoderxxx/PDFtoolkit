@@ -38,6 +38,7 @@ import RedactPdf from "@/pages/redact";
 import ComparePdf from "@/pages/compare";
 import AiSummarizer from "@/pages/ai-summarizer";
 import TranslatePdf from "@/pages/translate";
+import Pricing from "@/pages/pricing";
 
 import Features from "@/pages/features";
 import Tools from "@/pages/tools";
@@ -202,6 +203,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/contact" component={Contact} />
             <Route path="/blog" component={Blog} />
             <Route path="/press" component={Press} />
+            <Route path="/pricing" component={Pricing} />
 
             <Route component={NotFound} />
           </Switch>

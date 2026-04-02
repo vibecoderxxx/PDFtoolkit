@@ -16,6 +16,7 @@ const navLinks = [
   { href: "/compress", label: "Compress PDF" },
   { href: "/pdf-to-images", label: "Convert PDF" },
   { href: "/", label: "All PDF Tools" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 function UserMenu() {
