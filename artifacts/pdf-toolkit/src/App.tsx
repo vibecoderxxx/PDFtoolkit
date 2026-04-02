@@ -39,6 +39,25 @@ import ComparePdf from "@/pages/compare";
 import AiSummarizer from "@/pages/ai-summarizer";
 import TranslatePdf from "@/pages/translate";
 
+import Features from "@/pages/features";
+import Tools from "@/pages/tools";
+import Faq from "@/pages/faq";
+import Desktop from "@/pages/desktop";
+import MobileApp from "@/pages/mobile-app";
+import SignFeature from "@/pages/sign-feature";
+import DeveloperApi from "@/pages/developer-api";
+import ImageTools from "@/pages/image-tools";
+import Business from "@/pages/business";
+import Education from "@/pages/education";
+import Security from "@/pages/security";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
+import Cookies from "@/pages/cookies";
+import About from "@/pages/about";
+import Contact from "@/pages/contact";
+import Blog from "@/pages/blog";
+import Press from "@/pages/press";
+
 const queryClient = new QueryClient();
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -164,6 +183,26 @@ function ClerkProviderWithRoutes() {
             <Route path="/compare">{() => <ProtectedRoute component={ComparePdf} />}</Route>
             <Route path="/ai-summarize">{() => <ProtectedRoute component={AiSummarizer} />}</Route>
             <Route path="/translate">{() => <ProtectedRoute component={TranslatePdf} />}</Route>
+
+            <Route path="/features" component={Features} />
+            <Route path="/tools" component={Tools} />
+            <Route path="/faq" component={Faq} />
+            <Route path="/desktop" component={Desktop} />
+            <Route path="/mobile" component={MobileApp} />
+            <Route path="/sign-feature" component={SignFeature} />
+            <Route path="/developer-api" component={DeveloperApi} />
+            <Route path="/image-tools" component={ImageTools} />
+            <Route path="/business" component={Business} />
+            <Route path="/education" component={Education} />
+            <Route path="/security" component={Security} />
+            <Route path="/privacy" component={Privacy} />
+            <Route path="/terms" component={Terms} />
+            <Route path="/cookies" component={Cookies} />
+            <Route path="/about" component={About} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/blog" component={Blog} />
+            <Route path="/press" component={Press} />
+
             <Route component={NotFound} />
           </Switch>
           <Toaster />

@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { FileText, Search, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useUser, useClerk, Show } from "@clerk/react";
+import { Footer } from "./Footer";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -160,14 +161,7 @@ export function Layout({ children, search, onSearchChange }: LayoutProps) {
         {children}
       </main>
 
-      <footer className="border-t py-8 mt-12 bg-card">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground flex flex-col md:flex-row items-center justify-between">
-          <p>© {new Date().getFullYear()} PDF Toolkit. Professional PDF processing.</p>
-          <div className="mt-4 md:mt-0 flex items-center space-x-4">
-             <span className="text-xs">Fast, Secure, Reliable</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
