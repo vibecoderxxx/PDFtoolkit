@@ -310,18 +310,63 @@ router.post("/pdf/compress", upload.single("file"), async (req, res): Promise<vo
 
     const quality = req.body.quality ?? "medium";
     const originalSize = req.file.size;
+    const originalBuffer = req.file.buffer;
 
-    const pdfDoc = await PDFDocument.load(req.file.buffer, { ignoreEncryption: true });
+    const srcDoc = await PDFDocument.load(originalBuffer, { ignoreEncryption: true });
 
-    const useObjectStreams = quality !== "low";
-    const bytes = await pdfDoc.save({ useObjectStreams });
-    const compressedSize = bytes.length;
+    const candidates: Uint8Array[] = [];
+
+    const reserializedBytes = await srcDoc.save({
+      useObjectStreams: true,
+      addDefaultPage: false,
+    });
+    candidates.push(reserializedBytes);
+
+    if (quality === "low" || quality === "medium") {
+      const compressedDoc = await PDFDocument.create();
+      const pages = await compressedDoc.copyPages(srcDoc, srcDoc.getPageIndices());
+      for (const page of pages) {
+        compressedDoc.addPage(page);
+      }
+
+      if (quality === "low") {
+        compressedDoc.setTitle("");
+        compressedDoc.setAuthor("");
+        compressedDoc.setSubject("");
+        compressedDoc.setKeywords([]);
+        compressedDoc.setProducer("");
+        compressedDoc.setCreator("");
+      } else {
+        compressedDoc.setProducer("");
+        compressedDoc.setCreator("");
+      }
+
+      const rebuiltBytes = await compressedDoc.save({
+        useObjectStreams: true,
+        addDefaultPage: false,
+      });
+      candidates.push(rebuiltBytes);
+    }
+
+    let bestBytes = candidates[0];
+    for (const c of candidates) {
+      if (c.length < bestBytes.length) bestBytes = c;
+    }
+
+    let finalBytes: Uint8Array | Buffer = bestBytes;
+    let compressedSize = bestBytes.length;
+
+    if (compressedSize >= originalSize) {
+      finalBytes = originalBuffer;
+      compressedSize = originalSize;
+    }
+
     const savings = Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100));
 
     const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const tmpDir = os.tmpdir();
     const filePath = path.join(tmpDir, `${sessionId}.pdf`);
-    fs.writeFileSync(filePath, Buffer.from(bytes));
+    fs.writeFileSync(filePath, Buffer.from(finalBytes));
 
     setTimeout(() => {
       try {

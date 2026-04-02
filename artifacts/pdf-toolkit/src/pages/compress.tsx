@@ -19,6 +19,12 @@ export default function CompressPdf() {
     return "high";
   };
 
+  const getQualityLabel = (val: number) => {
+    if (val < 33) return "Maximum Compression";
+    if (val < 66) return "Recommended";
+    return "Less Compression";
+  };
+
   const handleUpload = (uploadedFiles: File[]) => {
     setFile(uploadedFiles[0]);
     setResult(null);
@@ -44,8 +50,10 @@ export default function CompressPdf() {
       setResult(data);
       
       toast({
-        title: "Success!",
-        description: "PDF compressed successfully.",
+        title: data.savings > 0 ? "Success!" : "Done",
+        description: data.savings > 0
+          ? `PDF compressed — saved ${data.savings}%!`
+          : "Your PDF is already well optimized.",
       });
     } catch (error) {
       toast({
@@ -101,7 +109,7 @@ export default function CompressPdf() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium">Compression Level</h3>
-                      <span className="text-sm font-bold text-primary capitalize">{getQualityString(qualityLevel[0])} Quality</span>
+                      <span className="text-sm font-bold text-primary">{getQualityLabel(qualityLevel[0])}</span>
                     </div>
                     
                     <div className="pt-6 pb-2 px-2">
@@ -157,7 +165,9 @@ export default function CompressPdf() {
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Download className="w-10 h-10" />
             </div>
-            <h2 className="text-2xl font-bold">Your PDF has been compressed!</h2>
+            <h2 className="text-2xl font-bold">
+              {result.savings > 0 ? "Your PDF has been compressed!" : "Your PDF is already optimized"}
+            </h2>
             
             <div className="bg-muted p-6 rounded-xl max-w-md mx-auto space-y-4">
               <div className="flex justify-between items-center border-b pb-2">
