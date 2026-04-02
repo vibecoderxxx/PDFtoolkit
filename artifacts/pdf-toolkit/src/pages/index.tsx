@@ -65,11 +65,25 @@ export default function Home() {
   });
 
   return (
-    <Layout search={search} onSearchChange={setSearch}>
+    <Layout>
       <div className="container mx-auto px-4 pt-10 pb-4">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-8" data-testid="heading-home">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4" data-testid="heading-home">
           Every tool you need to work with PDFs
         </h1>
+
+        <div className="relative max-w-xl mb-8">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <input
+            type="search"
+            placeholder="Search for a PDF tool..."
+            className="flex h-12 w-full rounded-xl border border-input bg-muted/50 pl-12 pr-4 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            data-testid="input-search-tools"
+          />
+        </div>
 
         <div className="flex flex-wrap gap-2 mb-8" data-testid="category-filters">
           {categories.map((cat) => (

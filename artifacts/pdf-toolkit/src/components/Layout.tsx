@@ -1,13 +1,11 @@
 import { Link } from "wouter";
-import { FileText, Search, Menu, X, LogOut, User } from "lucide-react";
+import { FileText, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useUser, useClerk, Show } from "@clerk/react";
 import { Footer } from "./Footer";
 
 interface LayoutProps {
   children: React.ReactNode;
-  search?: string;
-  onSearchChange?: (value: string) => void;
 }
 
 const navLinks = [
@@ -80,7 +78,7 @@ function UserMenu() {
   );
 }
 
-export function Layout({ children, search, onSearchChange }: LayoutProps) {
+export function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -103,22 +101,6 @@ export function Layout({ children, search, onSearchChange }: LayoutProps) {
           </nav>
 
           <div className="flex items-center gap-2">
-            {onSearchChange && (
-              <div className="relative w-full max-w-xs">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <input
-                  type="search"
-                  placeholder="Search tools..."
-                  className="flex h-9 w-full rounded-lg border border-input bg-muted/50 pl-9 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={search ?? ""}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  data-testid="input-search-tools"
-                />
-              </div>
-            )}
-
             <Show when="signed-in">
               <UserMenu />
             </Show>
