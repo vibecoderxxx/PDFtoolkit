@@ -15,7 +15,7 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 - **Authentication**: Clerk (@clerk/react on frontend, @clerk/express on backend)
 - **PDF processing**: pdf-lib (merge, split, edit, watermark, page numbers, protect/unlock, rotate, repair, images-to-PDF, organize, crop, sign, redact, edit, PDF/A)
 - **Document conversion**: mammoth (DOCX), xlsx (Excel), jszip (PPTX parsing), docx (DOCX creation), pptxgenjs (PPTX creation)
-- **AI features**: OpenAI via Replit AI Integrations (summarizer, translate)
+- **AI features**: Mistral Large via Mistral API (summarizer, translate, OCR post-processing, compare)
 - **File upload**: multer (multipart/form-data)
 - **Archive creation**: archiver (ZIP generation for multi-file downloads)
 - **API codegen**: Orval (from OpenAPI spec)
@@ -67,8 +67,8 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 29. **Compare PDF** - Compare two PDFs for structural differences
 
 ### AI (2)
-30. **AI Summarizer** - OpenAI-powered document summary
-31. **Translate PDF** - AI translation to 12+ languages
+30. **AI Summarizer** - Mistral Large-powered document summary
+31. **Translate PDF** - Mistral Large translation to 12+ languages
 
 ## Authentication
 
@@ -101,8 +101,7 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 
 ## Environment Variables
 
-- `AI_INTEGRATIONS_OPENAI_BASE_URL` — OpenAI proxy base URL (Replit AI Integrations)
-- `AI_INTEGRATIONS_OPENAI_API_KEY` — OpenAI proxy API key (Replit AI Integrations)
+- `MISTRAL_API_KEY` — Mistral API key for AI features (summarizer, translate, OCR, compare)
 - `SESSION_SECRET` — Session secret for auth
 
 ## Session File Handling

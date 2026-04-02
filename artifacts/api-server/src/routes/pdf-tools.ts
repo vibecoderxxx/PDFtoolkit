@@ -2,8 +2,19 @@ import { Router, type IRouter } from "express";
 import multer from "multer";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { logger } from "../lib/logger";
+import OpenAI from "openai";
 
 const router: IRouter = Router();
+
+function getMistralClient() {
+  if (!process.env.MISTRAL_API_KEY) {
+    throw new Error("MISTRAL_API_KEY is not configured");
+  }
+  return new OpenAI({
+    baseURL: "https://api.mistral.ai/v1",
+    apiKey: process.env.MISTRAL_API_KEY,
+  });
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -57,7 +68,44 @@ router.post("/pdf/ocr", upload.single("file"), async (req, res): Promise<void> =
     const pdfDoc = await PDFDocument.load(req.file.buffer);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     if (text.trim().length > 0) {
-      pdfDoc.setProducer("PDF Toolkit OCR - Text layer present");
+      let cleanedText = text;
+      try {
+        const mistral = getMistralClient();
+        const truncated = text.substring(0, 20000);
+        const completion = await mistral.chat.completions.create({
+          model: "mistral-large-latest",
+          messages: [
+            { role: "system", content: "You are an OCR post-processor. Clean up and structure the extracted text from a scanned PDF. Fix obvious OCR errors, correct spacing issues, reconstruct paragraphs and headings. Return the cleaned text preserving the document structure. Do not add any commentary." },
+            { role: "user", content: `Clean up this OCR-extracted text:\n\n${truncated}` },
+          ],
+          max_tokens: 8192,
+        });
+        cleanedText = completion.choices[0]?.message?.content || text;
+      } catch (aiErr) {
+        req.log.warn({ aiErr }, "AI OCR post-processing failed, returning raw extracted text");
+      }
+      const newDoc = await PDFDocument.create();
+      const newFont = await newDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await newDoc.embedFont(StandardFonts.HelveticaBold);
+      const fontSize = 11;
+      const margin = 50;
+      const lineHeight = fontSize * 1.4;
+      let currentPage = newDoc.addPage([595, 842]);
+      let yPos = 842 - margin;
+      currentPage.drawText("OCR Processed Document", { x: margin, y: yPos, size: 16, font: boldFont, color: rgb(0.1, 0.1, 0.5) });
+      yPos -= 30;
+      const lines = wrapText(cleanedText, newFont, fontSize, 595 - margin * 2);
+      for (const line of lines) {
+        if (yPos < margin + lineHeight) {
+          currentPage = newDoc.addPage([595, 842]);
+          yPos = 842 - margin;
+        }
+        currentPage.drawText(line, { x: margin, y: yPos, size: fontSize, font: newFont, color: rgb(0, 0, 0) });
+        yPos -= lineHeight;
+      }
+      const pdfBytes = await newDoc.save();
+      res.set({ "Content-Type": "application/pdf", "Content-Disposition": "attachment; filename=ocr.pdf" });
+      res.send(Buffer.from(pdfBytes));
     } else {
       const pages = pdfDoc.getPages();
       for (const page of pages) {
@@ -66,11 +114,11 @@ router.post("/pdf/ocr", upload.single("file"), async (req, res): Promise<void> =
         });
       }
       pdfDoc.setProducer("PDF Toolkit OCR - Processed");
+      pdfDoc.setCreator("PDF Toolkit");
+      const pdfBytes = await pdfDoc.save();
+      res.set({ "Content-Type": "application/pdf", "Content-Disposition": "attachment; filename=ocr.pdf" });
+      res.send(Buffer.from(pdfBytes));
     }
-    pdfDoc.setCreator("PDF Toolkit");
-    const pdfBytes = await pdfDoc.save();
-    res.set({ "Content-Type": "application/pdf", "Content-Disposition": "attachment; filename=ocr.pdf" });
-    res.send(Buffer.from(pdfBytes));
   } catch (err) {
     req.log.error({ err }, "Error applying OCR");
     sendError(res, 500, "Failed to apply OCR");
@@ -486,39 +534,52 @@ router.post("/pdf/compare", upload.fields([{ name: "file1", maxCount: 1 }, { nam
     ]);
     const doc1 = await PDFDocument.load(files.file1[0].buffer, { ignoreEncryption: true });
     const doc2 = await PDFDocument.load(files.file2[0].buffer, { ignoreEncryption: true });
-    const diffs: string[] = [];
+    const structuralDiffs: string[] = [];
     if (doc1.getPageCount() !== doc2.getPageCount()) {
-      diffs.push(`Page count: ${doc1.getPageCount()} vs ${doc2.getPageCount()}`);
+      structuralDiffs.push(`Page count: ${doc1.getPageCount()} vs ${doc2.getPageCount()}`);
     }
     if (files.file1[0].size !== files.file2[0].size) {
-      diffs.push(`File size: ${(files.file1[0].size / 1024).toFixed(1)}KB vs ${(files.file2[0].size / 1024).toFixed(1)}KB`);
+      structuralDiffs.push(`File size: ${(files.file1[0].size / 1024).toFixed(1)}KB vs ${(files.file2[0].size / 1024).toFixed(1)}KB`);
     }
+    const t1 = text1.substring(0, 12000);
+    const t2 = text2.substring(0, 12000);
+    if (t1.trim() === t2.trim() && structuralDiffs.length === 0) {
+      res.json({ identical: true, differences: "Documents have identical text content and structure." });
+      return;
+    }
+    const allDiffs = [...structuralDiffs];
     const lines1 = text1.split("\n");
     const lines2 = text2.split("\n");
     const maxLines = Math.max(lines1.length, lines2.length);
     let textDiffCount = 0;
-    const textDiffs: string[] = [];
     for (let i = 0; i < maxLines; i++) {
-      const l1 = lines1[i] || "";
-      const l2 = lines2[i] || "";
-      if (l1.trim() !== l2.trim()) {
-        textDiffCount++;
-        if (textDiffs.length < 20) {
-          textDiffs.push(`Line ${i + 1}:`);
-          if (l1.trim()) textDiffs.push(`  - ${l1.trim().substring(0, 100)}`);
-          if (l2.trim()) textDiffs.push(`  + ${l2.trim().substring(0, 100)}`);
-        }
-      }
+      if ((lines1[i] || "").trim() !== (lines2[i] || "").trim()) textDiffCount++;
     }
     if (textDiffCount > 0) {
-      diffs.push(`Text content: ${textDiffCount} line(s) differ`);
-      diffs.push("");
-      diffs.push(...textDiffs);
-      if (textDiffCount > 20) diffs.push(`... and ${textDiffCount - 20} more differences`);
+      allDiffs.push(`Text content: ${textDiffCount} line(s) differ`);
+    }
+    try {
+      const mistral = getMistralClient();
+      const completion = await mistral.chat.completions.create({
+        model: "mistral-large-latest",
+        messages: [
+          { role: "system", content: "You are a document comparison expert. Compare the two documents and provide a clear, structured analysis of the differences. Include: 1) A summary of key changes, 2) Content additions and removals, 3) Structural differences. Be specific and concise. Use bullet points." },
+          { role: "user", content: `Compare these two PDF documents:\n\nStructural differences: ${structuralDiffs.join(", ") || "None"}\n\n--- DOCUMENT 1 ---\n${t1}\n\n--- DOCUMENT 2 ---\n${t2}` },
+        ],
+        max_tokens: 8192,
+      });
+      const aiAnalysis = completion.choices[0]?.message?.content || "";
+      if (aiAnalysis) {
+        allDiffs.push("");
+        allDiffs.push("AI Analysis:");
+        allDiffs.push(aiAnalysis);
+      }
+    } catch (aiErr) {
+      req.log.warn({ aiErr }, "AI comparison failed, returning basic diff");
     }
     res.json({
-      identical: diffs.length === 0,
-      differences: diffs.length > 0 ? diffs.join("\n") : "Documents have identical text content and structure.",
+      identical: false,
+      differences: allDiffs.join("\n"),
     });
   } catch (err) {
     req.log.error({ err }, "Error comparing PDFs");
@@ -533,19 +594,15 @@ router.post("/pdf/ai-summarize", upload.single("file"), async (req, res): Promis
     const pdfDoc = await PDFDocument.load(req.file.buffer, { ignoreEncryption: true });
     const pageCount = pdfDoc.getPageCount();
     const title = pdfDoc.getTitle() || "Untitled";
-    const truncatedText = text.substring(0, 12000);
-    const OpenAI = (await import("openai")).default;
-    const openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-    });
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const truncatedText = text.substring(0, 30000);
+    const mistral = getMistralClient();
+    const completion = await mistral.chat.completions.create({
+      model: "mistral-large-latest",
       messages: [
         { role: "system", content: "You are a document summarizer. Provide a comprehensive, well-structured summary of the document. Include key points, main arguments, and important details. Use bullet points and sections for clarity." },
         { role: "user", content: `Summarize this ${pageCount}-page PDF document titled "${title}":\n\n${truncatedText}` },
       ],
-      max_tokens: 1500,
+      max_tokens: 8192,
     });
     const summary = completion.choices[0]?.message?.content || "Unable to generate summary.";
     res.json({ summary });
@@ -566,19 +623,15 @@ router.post("/pdf/translate", upload.single("file"), async (req, res): Promise<v
     };
     const langName = langNames[targetLanguage] || targetLanguage;
     const text = await extractPdfText(req.file.buffer);
-    const truncatedText = text.substring(0, 10000);
-    const OpenAI = (await import("openai")).default;
-    const openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-    });
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const truncatedText = text.substring(0, 25000);
+    const mistral = getMistralClient();
+    const completion = await mistral.chat.completions.create({
+      model: "mistral-large-latest",
       messages: [
         { role: "system", content: `You are a professional translator. Translate the following text to ${langName}. Maintain the original formatting and structure. Only output the translation, no explanations.` },
         { role: "user", content: truncatedText || "No text content found in this PDF." },
       ],
-      max_tokens: 4000,
+      max_tokens: 8192,
     });
     const translatedText = completion.choices[0]?.message?.content || "Translation unavailable";
     const pdfDoc = await PDFDocument.create();
