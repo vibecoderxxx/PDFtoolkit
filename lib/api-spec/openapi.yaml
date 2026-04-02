@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PDF Toolkit API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: pdf
+    description: PDF processing operations
+  - name: sessions
+    description: Session file management
 paths:
   /healthz:
     get:
@@ -24,6 +28,544 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /pdf/merge:
+    post:
+      operationId: mergePdfs
+      tags: [pdf]
+      summary: Merge multiple PDFs
+      description: Merge multiple PDF files into a single PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                order:
+                  type: string
+                  description: JSON array of file indices in desired order
+                passwords:
+                  type: string
+                  description: JSON object of file index to password
+      responses:
+        "200":
+          description: Merged PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/split:
+    post:
+      operationId: splitPdf
+      tags: [pdf]
+      summary: Split PDF
+      description: Split a PDF by page ranges or extract all pages
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                mode:
+                  type: string
+                  enum: [ranges, all-pages]
+                ranges:
+                  type: string
+                  description: JSON array of page ranges e.g. [{"from":1,"to":3},{"from":5,"to":5}]
+                outputMode:
+                  type: string
+                  enum: [separate, merged]
+      responses:
+        "200":
+          description: Split PDF result (zip for multiple files, pdf for single)
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/remove-pages:
+    post:
+      operationId: removePages
+      tags: [pdf]
+      summary: Remove pages from PDF
+      description: Remove specific pages from a PDF document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                pages:
+                  type: string
+                  description: JSON array of 1-based page numbers to remove
+      responses:
+        "200":
+          description: PDF with pages removed
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/extract-pages:
+    post:
+      operationId: extractPages
+      tags: [pdf]
+      summary: Extract pages from PDF
+      description: Extract specific pages from a PDF document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                pages:
+                  type: string
+                  description: JSON array of 1-based page numbers to extract
+                outputMode:
+                  type: string
+                  enum: [zip, merged]
+      responses:
+        "200":
+          description: Extracted pages (zip or merged PDF)
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/compress:
+    post:
+      operationId: compressPdf
+      tags: [pdf]
+      summary: Compress PDF
+      description: Compress a PDF file to reduce file size
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                quality:
+                  type: string
+                  enum: [low, medium, high]
+      responses:
+        "200":
+          description: Compressed PDF
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompressResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/add-watermark:
+    post:
+      operationId: addWatermark
+      tags: [pdf]
+      summary: Add watermark to PDF
+      description: Add text or image watermark to a PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                watermarkImage:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [text, image]
+                text:
+                  type: string
+                opacity:
+                  type: number
+                rotation:
+                  type: number
+                position:
+                  type: string
+                  enum: [center, top-left, top-right, bottom-left, bottom-right, top-center, bottom-center]
+                fontSize:
+                  type: number
+                color:
+                  type: string
+      responses:
+        "200":
+          description: PDF with watermark
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/add-page-numbers:
+    post:
+      operationId: addPageNumbers
+      tags: [pdf]
+      summary: Add page numbers to PDF
+      description: Add page numbers to a PDF document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                position:
+                  type: string
+                  enum: [top-left, top-center, top-right, bottom-left, bottom-center, bottom-right]
+                format:
+                  type: string
+                  enum: [numeric, "Page X of Y", "X/Y"]
+                startNumber:
+                  type: number
+                fontSize:
+                  type: number
+                opacity:
+                  type: number
+                startPage:
+                  type: number
+                endPage:
+                  type: number
+      responses:
+        "200":
+          description: PDF with page numbers
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/protect:
+    post:
+      operationId: protectPdf
+      tags: [pdf]
+      summary: Protect PDF with password
+      description: Add password protection to a PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                password:
+                  type: string
+                permissions:
+                  type: string
+                  description: JSON object of permissions
+      responses:
+        "200":
+          description: Password-protected PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/unlock:
+    post:
+      operationId: unlockPdf
+      tags: [pdf]
+      summary: Unlock PDF (remove password)
+      description: Remove password protection from a PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Unlocked PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/rotate:
+    post:
+      operationId: rotatePdf
+      tags: [pdf]
+      summary: Rotate PDF pages
+      description: Rotate specific or all pages in a PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                pages:
+                  type: string
+                  description: JSON array of page configs with page number and degrees
+                degrees:
+                  type: number
+                  enum: [90, 180, 270]
+                allPages:
+                  type: string
+                  enum: ["true", "false"]
+      responses:
+        "200":
+          description: PDF with rotated pages
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/repair:
+    post:
+      operationId: repairPdf
+      tags: [pdf]
+      summary: Repair corrupted PDF
+      description: Attempt to repair a corrupted PDF file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Repaired PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/images-to-pdf:
+    post:
+      operationId: imagesToPdf
+      tags: [pdf]
+      summary: Convert images to PDF
+      description: Convert JPG/PNG images to a PDF file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                pageSize:
+                  type: string
+                  enum: [A4, Letter, fit-to-image]
+                orientation:
+                  type: string
+                  enum: [portrait, landscape]
+                margin:
+                  type: number
+      responses:
+        "200":
+          description: PDF from images
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/to-images:
+    post:
+      operationId: pdfToImages
+      tags: [pdf]
+      summary: Convert PDF to images
+      description: Convert PDF pages to JPG/PNG images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                format:
+                  type: string
+                  enum: [jpg, png]
+                dpi:
+                  type: number
+      responses:
+        "200":
+          description: ZIP archive of images
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/preview:
+    post:
+      operationId: getPdfPreview
+      tags: [pdf]
+      summary: Get PDF page thumbnails
+      description: Generate thumbnail images for PDF pages
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                maxPages:
+                  type: number
+      responses:
+        "200":
+          description: PDF preview info with page count and thumbnails
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfPreviewResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /pdf/info:
+    post:
+      operationId: getPdfInfo
+      tags: [pdf]
+      summary: Get PDF metadata
+      description: Get metadata and info about a PDF file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: PDF metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfInfo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +576,134 @@ components:
       required:
         - status
 
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
+
+    CompressResult:
+      type: object
+      properties:
+        originalSize:
+          type: number
+          description: Original file size in bytes
+        compressedSize:
+          type: number
+          description: Compressed file size in bytes
+        savings:
+          type: number
+          description: Percentage of size reduction
+        downloadUrl:
+          type: string
+          description: URL to download the compressed file
+        sessionId:
+          type: string
+      required:
+        - originalSize
+        - compressedSize
+        - savings
+        - downloadUrl
+        - sessionId
+
+    PdfPreviewResult:
+      type: object
+      properties:
+        pageCount:
+          type: number
+        pages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PdfPagePreview"
+        fileSize:
+          type: number
+        fileName:
+          type: string
+      required:
+        - pageCount
+        - pages
+        - fileSize
+        - fileName
+
+    PdfPagePreview:
+      type: object
+      properties:
+        page:
+          type: number
+        thumbnail:
+          type: string
+          description: Base64 encoded thumbnail image data URL
+        width:
+          type: number
+        height:
+          type: number
+      required:
+        - page
+        - thumbnail
+        - width
+        - height
+
+    PdfInfo:
+      type: object
+      properties:
+        pageCount:
+          type: number
+        title:
+          type: string
+        author:
+          type: string
+        subject:
+          type: string
+        creator:
+          type: string
+        producer:
+          type: string
+        creationDate:
+          type: string
+        modificationDate:
+          type: string
+        fileSize:
+          type: number
+        isEncrypted:
+          type: boolean
+        pages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PdfPageInfo"
+      required:
+        - pageCount
+        - fileSize
+        - isEncrypted
+
+    PdfPageInfo:
+      type: object
+      properties:
+        page:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+      required:
+        - page
+        - width
+        - height
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"

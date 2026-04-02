@@ -1,0 +1,104 @@
+Build a modern full-stack web app called "PDF Toolkit" similar to iLovePDF.
+
+Tech Stack:
+- Frontend: React + Tailwind CSS
+- Backend: Node.js (Express)
+- File handling: multer
+- PDF processing libraries:
+  - pdf-lib (merge, split, edit)
+  - pdfjs-dist (preview thumbnails)
+  - sharp (image handling)
+  - libreoffice / docx-pdf (for conversions if possible)
+
+Core Features:
+
+1. Merge PDF
+- Upload multiple PDFs (local + drag & drop)
+- Reorder files before merging
+- Merge into a single PDF
+- Support password-protected PDFs
+
+2. Split PDF
+- Upload PDF
+- Split by page range OR extract all pages
+- Option to download as separate files or single merged PDF
+
+3. Remove Pages
+- Show thumbnails of all pages
+- Allow selecting pages to delete
+- Export cleaned PDF
+
+4. Extract Pages
+- Select specific pages
+- Option: download as ZIP or merged PDF
+
+5. Organize PDF
+- Drag & drop pages to reorder
+- Delete pages
+- Merge multiple PDFs visually
+
+6. Compress PDF
+- Options: Low, Medium, High compression
+- Show file size before/after
+
+7. Edit PDF
+- Add text, images, shapes
+- Move/resize elements
+- Change color, opacity, rotation
+
+8. Add Page Numbers
+- Customize position, format, size, opacity
+- Select page ranges
+
+9. Add Watermark
+- Text or image watermark
+- Control opacity, rotation, position
+
+10. Repair PDF
+- Attempt to fix corrupted PDFs
+
+11. Convert to PDF
+- JPG → PDF
+- Word → PDF
+- PowerPoint → PDF
+- Excel → PDF
+- HTML URL → PDF
+
+12. Convert from PDF
+- PDF → JPG
+- PDF → Word
+- PDF → PowerPoint
+- PDF → Excel
+
+13. PDF Security
+- Unlock PDF (remove password)
+- Protect PDF (add password)
+- Convert to PDF/A
+
+14. Sign PDF
+- Draw/upload/type signature
+- Place signature on document
+- Optional: multi-user e-sign flow (basic email simulation)
+
+UI/UX Requirements:
+- Clean, minimal dashboard like iLovePDF
+- Grid layout of tools with icons
+- Drag & drop upload area
+- Real-time preview thumbnails
+- Progress/loading indicators
+- Mobile responsive
+
+Extra Features:
+- Save files temporarily (session-based)
+- Download buttons after processing
+- Error handling for unsupported files
+- File size limits
+
+Bonus:
+- Add Google Drive & Dropbox integration (mock or real API if possible)
+- Add authentication (optional)
+
+Output:
+- Fully working web app with frontend + backend
+- Clear folder structure
+- Instructions to run in Replit
