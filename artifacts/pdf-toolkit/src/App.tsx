@@ -18,6 +18,24 @@ import RotatePdf from "@/pages/rotate";
 import ImagesToPdf from "@/pages/images-to-pdf";
 import PdfToImages from "@/pages/pdf-to-images";
 import RepairPdf from "@/pages/repair";
+import OrganizePdf from "@/pages/organize";
+import ScanToPdf from "@/pages/scan-to-pdf";
+import OcrPdf from "@/pages/ocr";
+import WordToPdf from "@/pages/word-to-pdf";
+import PowerpointToPdf from "@/pages/powerpoint-to-pdf";
+import ExcelToPdf from "@/pages/excel-to-pdf";
+import HtmlToPdf from "@/pages/html-to-pdf";
+import PdfToWord from "@/pages/pdf-to-word";
+import PdfToPowerpoint from "@/pages/pdf-to-powerpoint";
+import PdfToExcel from "@/pages/pdf-to-excel";
+import PdfToPdfa from "@/pages/pdf-to-pdfa";
+import CropPdf from "@/pages/crop";
+import EditPdf from "@/pages/edit-pdf";
+import SignPdf from "@/pages/sign";
+import RedactPdf from "@/pages/redact";
+import ComparePdf from "@/pages/compare";
+import AiSummarizer from "@/pages/ai-summarizer";
+import TranslatePdf from "@/pages/translate";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +56,24 @@ function Router() {
       <Route path="/images-to-pdf" component={ImagesToPdf} />
       <Route path="/pdf-to-images" component={PdfToImages} />
       <Route path="/repair" component={RepairPdf} />
+      <Route path="/organize" component={OrganizePdf} />
+      <Route path="/scan-to-pdf" component={ScanToPdf} />
+      <Route path="/ocr" component={OcrPdf} />
+      <Route path="/word-to-pdf" component={WordToPdf} />
+      <Route path="/powerpoint-to-pdf" component={PowerpointToPdf} />
+      <Route path="/excel-to-pdf" component={ExcelToPdf} />
+      <Route path="/html-to-pdf" component={HtmlToPdf} />
+      <Route path="/pdf-to-word" component={PdfToWord} />
+      <Route path="/pdf-to-powerpoint" component={PdfToPowerpoint} />
+      <Route path="/pdf-to-excel" component={PdfToExcel} />
+      <Route path="/pdf-to-pdfa" component={PdfToPdfa} />
+      <Route path="/crop" component={CropPdf} />
+      <Route path="/edit-pdf" component={EditPdf} />
+      <Route path="/sign" component={SignPdf} />
+      <Route path="/redact" component={RedactPdf} />
+      <Route path="/compare" component={ComparePdf} />
+      <Route path="/ai-summarize" component={AiSummarizer} />
+      <Route path="/translate" component={TranslatePdf} />
       <Route component={NotFound} />
     </Switch>
   );

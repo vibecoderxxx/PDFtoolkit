@@ -2,7 +2,7 @@
 
 ## Overview
 
-A full-stack PDF processing web app similar to iLovePDF, built with React + Tailwind CSS frontend and Express backend.
+A full-stack PDF processing web app similar to iLovePDF, built with React + Tailwind CSS frontend and Express backend. Features 31 PDF tools organized by category.
 
 ## Stack
 
@@ -12,7 +12,9 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 - **TypeScript version**: 5.9
 - **Frontend**: React + Vite + Tailwind CSS (artifacts/pdf-toolkit)
 - **API framework**: Express 5 (artifacts/api-server)
-- **PDF processing**: pdf-lib (merge, split, edit, watermark, page numbers, protect/unlock, rotate, repair, images-to-PDF)
+- **PDF processing**: pdf-lib (merge, split, edit, watermark, page numbers, protect/unlock, rotate, repair, images-to-PDF, organize, crop, sign, redact, edit, PDF/A)
+- **Document conversion**: mammoth (DOCX), xlsx (Excel), jszip (PPTX parsing), docx (DOCX creation), pptxgenjs (PPTX creation)
+- **AI features**: OpenAI via Replit AI Integrations (summarizer, translate)
 - **File upload**: multer (multipart/form-data)
 - **Archive creation**: archiver (ZIP generation for multi-file downloads)
 - **API codegen**: Orval (from OpenAPI spec)
@@ -20,29 +22,62 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 - **Routing**: wouter
 - **Drag & drop**: react-dropzone
 
-## Features
+## Features (31 Tools)
 
-1. **Merge PDF** - Upload multiple PDFs, reorder, merge into one
-2. **Split PDF** - Split by page range or extract all pages, download as ZIP or merged
-3. **Remove Pages** - Show thumbnails, select pages to delete
+### Organize (6)
+1. **Merge PDF** - Combine multiple PDFs into one
+2. **Split PDF** - Split by page range, download as ZIP or merged
+3. **Remove Pages** - Select pages to delete
 4. **Extract Pages** - Select pages, download as ZIP or merged
-5. **Compress PDF** - Three quality levels, shows before/after file size
-6. **Add Watermark** - Text or image watermark with opacity, rotation, position controls
-7. **Add Page Numbers** - Customize position, format, font size, page range
-8. **Protect PDF** - Add password protection
-9. **Unlock PDF** - Remove password protection
-10. **Rotate Pages** - Rotate specific or all pages
-11. **Repair PDF** - Attempt to fix corrupted PDFs
-12. **Images to PDF** - Convert JPG/PNG to PDF with page size and margin controls
-13. **PDF to Images** - Convert PDF pages to image ZIP archive
+5. **Organize PDF** - Reorder pages with up/down controls
+6. **Scan to PDF** - Upload scanned images, convert to PDF
+
+### Optimize (3)
+7. **Compress PDF** - Three quality levels with before/after comparison
+8. **Repair PDF** - Fix corrupted PDFs
+9. **OCR PDF** - Apply OCR processing to scanned PDFs
+
+### Convert to PDF (5)
+10. **JPG to PDF** - Convert images with page size/margin controls
+11. **WORD to PDF** - DOCX to PDF via mammoth text extraction
+12. **POWERPOINT to PDF** - PPTX to PDF via XML text extraction
+13. **EXCEL to PDF** - XLSX/CSV to PDF table rendering
+14. **HTML to PDF** - HTML file to PDF text rendering
+
+### Convert from PDF (5)
+15. **PDF to JPG** - Pages to images ZIP archive
+16. **PDF to WORD** - PDF to DOCX via docx package
+17. **PDF to POWERPOINT** - PDF to PPTX via pptxgenjs
+18. **PDF to EXCEL** - PDF metadata to XLSX
+19. **PDF to PDF/A** - Set archiving metadata
+
+### Edit (5)
+20. **Rotate PDF** - Rotate specific or all pages
+21. **Add Page Numbers** - Customize position, format, font size
+22. **Add Watermark** - Text/image with opacity, rotation controls
+23. **Crop PDF** - Trim margins with per-side control
+24. **Edit PDF** - Add text annotations with position/size controls
+
+### Security (5)
+25. **Unlock PDF** - Remove password protection
+26. **Protect PDF** - Add password encryption
+27. **Sign PDF** - Add text signature with date stamp
+28. **Redact PDF** - Black out sensitive information
+29. **Compare PDF** - Compare two PDFs for structural differences
+
+### AI (2)
+30. **AI Summarizer** - OpenAI-powered document summary
+31. **Translate PDF** - AI translation to 12+ languages
 
 ## Architecture
 
 - `artifacts/pdf-toolkit/` — React + Vite frontend, serves at `/`
 - `artifacts/api-server/` — Express API server, serves at `/api`
+  - `src/routes/pdf.ts` — Original 13 tool endpoints
+  - `src/routes/pdf-tools.ts` — 18 new tool endpoints (organize, OCR, conversions, AI)
 - `lib/api-spec/openapi.yaml` — API contract (source of truth)
-- `lib/api-client-react/` — Generated React Query hooks (from Orval codegen)
-- `lib/api-zod/` — Generated Zod schemas (from Orval codegen)
+- `lib/api-client-react/` — Generated React Query hooks
+- `lib/api-zod/` — Generated Zod schemas
 
 ## Key Commands
 
@@ -51,6 +86,12 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks from OpenAPI spec
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 - `pnpm --filter @workspace/pdf-toolkit run dev` — run frontend locally
+
+## Environment Variables
+
+- `AI_INTEGRATIONS_OPENAI_BASE_URL` — OpenAI proxy base URL (Replit AI Integrations)
+- `AI_INTEGRATIONS_OPENAI_API_KEY` — OpenAI proxy API key (Replit AI Integrations)
+- `SESSION_SECRET` — Session secret for auth
 
 ## Session File Handling
 
