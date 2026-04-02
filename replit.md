@@ -12,6 +12,7 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 - **TypeScript version**: 5.9
 - **Frontend**: React + Vite + Tailwind CSS (artifacts/pdf-toolkit)
 - **API framework**: Express 5 (artifacts/api-server)
+- **Authentication**: Clerk (@clerk/react on frontend, @clerk/express on backend)
 - **PDF processing**: pdf-lib (merge, split, edit, watermark, page numbers, protect/unlock, rotate, repair, images-to-PDF, organize, crop, sign, redact, edit, PDF/A)
 - **Document conversion**: mammoth (DOCX), xlsx (Excel), jszip (PPTX parsing), docx (DOCX creation), pptxgenjs (PPTX creation)
 - **AI features**: OpenAI via Replit AI Integrations (summarizer, translate)
@@ -69,10 +70,21 @@ A full-stack PDF processing web app similar to iLovePDF, built with React + Tail
 30. **AI Summarizer** - OpenAI-powered document summary
 31. **Translate PDF** - AI translation to 12+ languages
 
+## Authentication
+
+- **Provider**: Clerk (auto-provisioned via setupClerkWhitelabelAuth)
+- **Frontend**: ClerkProvider wraps app in App.tsx, with sign-in/sign-up routes using Clerk's pre-built components
+- **Backend**: clerkMiddleware() mounted globally, requireAuth middleware protects PDF API routes
+- **Home page**: Publicly accessible (shows tools grid for both signed-in and signed-out users)
+- **Tool pages**: Protected — unauthenticated users redirected to /sign-in
+- **User menu**: Avatar + dropdown in header with sign-out option (uses useUser hook, not UserButton)
+- **Env vars**: CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, VITE_CLERK_PUBLISHABLE_KEY (auto-provisioned)
+
 ## Architecture
 
 - `artifacts/pdf-toolkit/` — React + Vite frontend, serves at `/`
 - `artifacts/api-server/` — Express API server, serves at `/api`
+- `artifacts/api-server/src/middlewares/` — Clerk proxy and auth middleware
   - `src/routes/pdf.ts` — Original 13 tool endpoints
   - `src/routes/pdf-tools.ts` — 18 new tool endpoints (organize, OCR, conversions, AI)
 - `lib/api-spec/openapi.yaml` — API contract (source of truth)

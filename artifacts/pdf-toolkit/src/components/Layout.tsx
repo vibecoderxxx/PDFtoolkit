@@ -1,6 +1,7 @@
 import { Link } from "wouter";
-import { FileText, Search, Menu, X } from "lucide-react";
+import { FileText, Search, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useUser, useClerk, Show } from "@clerk/react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,67 @@ const navLinks = [
   { href: "/pdf-to-images", label: "Convert PDF" },
   { href: "/", label: "All PDF Tools" },
 ];
+
+function UserMenu() {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const [open, setOpen] = useState(false);
+
+  if (!user) return null;
+
+  const initials = user.firstName && user.lastName
+    ? `${user.firstName[0]}${user.lastName[0]}`
+    : user.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() ?? "U";
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-full hover:ring-2 hover:ring-primary/30 transition-all"
+        data-testid="user-menu-button"
+      >
+        {user.imageUrl ? (
+          <img
+            src={user.imageUrl}
+            alt="Avatar"
+            className="w-8 h-8 rounded-full object-cover border"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+            {initials}
+          </div>
+        )}
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-2 w-56 bg-card border rounded-lg shadow-lg z-50 py-1" data-testid="user-menu-dropdown">
+            <div className="px-4 py-3 border-b">
+              <p className="text-sm font-medium text-foreground truncate">
+                {user.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : "User"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.emailAddresses?.[0]?.emailAddress}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setOpen(false);
+                signOut({ redirectUrl: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "") + "/" });
+              }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              data-testid="sign-out-button"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function Layout({ children, search, onSearchChange }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -54,6 +116,19 @@ export function Layout({ children, search, onSearchChange }: LayoutProps) {
                 />
               </div>
             )}
+
+            <Show when="signed-in">
+              <UserMenu />
+            </Show>
+            <Show when="signed-out">
+              <Link
+                href="/sign-in"
+                className="text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-2 rounded-md transition-colors"
+                data-testid="sign-in-link"
+              >
+                Sign in
+              </Link>
+            </Show>
 
             <button
               className="md:hidden p-2 rounded-md hover:bg-muted transition-colors"
