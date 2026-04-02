@@ -5,52 +5,65 @@ import {
   ListOrdered, Lock, Unlock, RotateCw, Image, ImageDown, Wrench, Search,
   GripVertical, ScanLine, Eye, FileText, Presentation, Sheet, Code,
   FileDown, FileUp, ShieldCheck, Crop, Pencil, PenTool, EyeOff,
-  GitCompare, Sparkles, Languages
+  GitCompare, Sparkles, Languages, ArrowRight, Zap, Shield, Globe
 } from "lucide-react";
 import { useState } from "react";
 
 const categories = ["All", "Organize", "Optimize", "Convert to PDF", "Convert from PDF", "Edit", "Security", "AI"] as const;
 type Category = typeof categories[number];
 
+const categoryIcons: Record<Category, typeof Zap> = {
+  "All": Zap,
+  "Organize": GripVertical,
+  "Optimize": Minimize2,
+  "Convert to PDF": FileUp,
+  "Convert from PDF": FileDown,
+  "Edit": Pencil,
+  "Security": Shield,
+  "AI": Sparkles,
+};
+
 const allTools = [
-  { id: "merge", name: "Merge PDF", description: "Combine multiple PDFs into one unified document.", icon: FilePlus2, path: "/merge", color: "text-blue-500", bg: "bg-blue-50", category: "Organize" as Category },
-  { id: "split", name: "Split PDF", description: "Separate one page or a whole set for easy conversion into independent PDF files.", icon: SplitSquareHorizontal, path: "/split", color: "text-orange-500", bg: "bg-orange-50", category: "Organize" as Category },
-  { id: "remove-pages", name: "Remove pages", description: "Remove pages from a PDF document.", icon: Trash2, path: "/remove-pages", color: "text-red-500", bg: "bg-red-50", category: "Organize" as Category },
-  { id: "extract-pages", name: "Extract pages", description: "Get a new document containing only the desired pages.", icon: FileOutput, path: "/extract-pages", color: "text-purple-500", bg: "bg-purple-50", category: "Organize" as Category },
-  { id: "organize", name: "Organize PDF", description: "Sort, reorder, and organize the pages of your PDF.", icon: GripVertical, path: "/organize", color: "text-violet-500", bg: "bg-violet-50", category: "Organize" as Category },
-  { id: "scan-to-pdf", name: "Scan to PDF", description: "Upload scanned images and convert them into a PDF.", icon: ScanLine, path: "/scan-to-pdf", color: "text-sky-500", bg: "bg-sky-50", category: "Organize" as Category },
+  { id: "merge", name: "Merge PDF", description: "Combine multiple PDFs into one unified document.", icon: FilePlus2, path: "/merge", color: "text-blue-500", bg: "bg-blue-50", gradient: "from-blue-500/10 to-blue-600/5", category: "Organize" as Category },
+  { id: "split", name: "Split PDF", description: "Separate one page or a whole set for easy conversion into independent PDF files.", icon: SplitSquareHorizontal, path: "/split", color: "text-orange-500", bg: "bg-orange-50", gradient: "from-orange-500/10 to-orange-600/5", category: "Organize" as Category },
+  { id: "remove-pages", name: "Remove pages", description: "Remove pages from a PDF document.", icon: Trash2, path: "/remove-pages", color: "text-red-500", bg: "bg-red-50", gradient: "from-red-500/10 to-red-600/5", category: "Organize" as Category },
+  { id: "extract-pages", name: "Extract pages", description: "Get a new document containing only the desired pages.", icon: FileOutput, path: "/extract-pages", color: "text-purple-500", bg: "bg-purple-50", gradient: "from-purple-500/10 to-purple-600/5", category: "Organize" as Category },
+  { id: "organize", name: "Organize PDF", description: "Sort, reorder, and organize the pages of your PDF.", icon: GripVertical, path: "/organize", color: "text-violet-500", bg: "bg-violet-50", gradient: "from-violet-500/10 to-violet-600/5", category: "Organize" as Category },
+  { id: "scan-to-pdf", name: "Scan to PDF", description: "Upload scanned images and convert them into a PDF.", icon: ScanLine, path: "/scan-to-pdf", color: "text-sky-500", bg: "bg-sky-50", gradient: "from-sky-500/10 to-sky-600/5", category: "Organize" as Category },
 
-  { id: "compress", name: "Compress PDF", description: "Reduce file size while optimizing for maximal PDF quality.", icon: Minimize2, path: "/compress", color: "text-green-500", bg: "bg-green-50", category: "Optimize" as Category },
-  { id: "repair", name: "Repair PDF", description: "Repair a damaged or corrupted PDF document.", icon: Wrench, path: "/repair", color: "text-slate-500", bg: "bg-slate-50", category: "Optimize" as Category },
-  { id: "ocr", name: "OCR PDF", description: "Apply OCR to make scanned PDFs searchable.", icon: Eye, path: "/ocr", color: "text-pink-500", bg: "bg-pink-50", category: "Optimize" as Category },
+  { id: "compress", name: "Compress PDF", description: "Reduce file size while optimizing for maximal PDF quality.", icon: Minimize2, path: "/compress", color: "text-green-500", bg: "bg-green-50", gradient: "from-green-500/10 to-green-600/5", category: "Optimize" as Category },
+  { id: "repair", name: "Repair PDF", description: "Repair a damaged or corrupted PDF document.", icon: Wrench, path: "/repair", color: "text-slate-500", bg: "bg-slate-50", gradient: "from-slate-500/10 to-slate-600/5", category: "Optimize" as Category },
+  { id: "ocr", name: "OCR PDF", description: "Apply OCR to make scanned PDFs searchable.", icon: Eye, path: "/ocr", color: "text-pink-500", bg: "bg-pink-50", gradient: "from-pink-500/10 to-pink-600/5", category: "Optimize" as Category },
 
-  { id: "images-to-pdf", name: "JPG to PDF", description: "Convert JPG images to PDF in seconds.", icon: Image, path: "/images-to-pdf", color: "text-yellow-500", bg: "bg-yellow-50", category: "Convert to PDF" as Category },
-  { id: "word-to-pdf", name: "WORD to PDF", description: "Convert Word documents to PDF format.", icon: FileText, path: "/word-to-pdf", color: "text-blue-600", bg: "bg-blue-50", category: "Convert to PDF" as Category },
-  { id: "powerpoint-to-pdf", name: "POWERPOINT to PDF", description: "Convert PowerPoint presentations to PDF.", icon: Presentation, path: "/powerpoint-to-pdf", color: "text-orange-600", bg: "bg-orange-50", category: "Convert to PDF" as Category },
-  { id: "excel-to-pdf", name: "EXCEL to PDF", description: "Convert Excel spreadsheets to PDF.", icon: Sheet, path: "/excel-to-pdf", color: "text-green-600", bg: "bg-green-50", category: "Convert to PDF" as Category },
-  { id: "html-to-pdf", name: "HTML to PDF", description: "Convert HTML files to PDF documents.", icon: Code, path: "/html-to-pdf", color: "text-indigo-500", bg: "bg-indigo-50", category: "Convert to PDF" as Category },
+  { id: "images-to-pdf", name: "JPG to PDF", description: "Convert JPG images to PDF in seconds.", icon: Image, path: "/images-to-pdf", color: "text-yellow-500", bg: "bg-yellow-50", gradient: "from-yellow-500/10 to-yellow-600/5", category: "Convert to PDF" as Category },
+  { id: "word-to-pdf", name: "WORD to PDF", description: "Convert Word documents to PDF format.", icon: FileText, path: "/word-to-pdf", color: "text-blue-600", bg: "bg-blue-50", gradient: "from-blue-600/10 to-blue-700/5", category: "Convert to PDF" as Category },
+  { id: "powerpoint-to-pdf", name: "POWERPOINT to PDF", description: "Convert PowerPoint presentations to PDF.", icon: Presentation, path: "/powerpoint-to-pdf", color: "text-orange-600", bg: "bg-orange-50", gradient: "from-orange-600/10 to-orange-700/5", category: "Convert to PDF" as Category },
+  { id: "excel-to-pdf", name: "EXCEL to PDF", description: "Convert Excel spreadsheets to PDF.", icon: Sheet, path: "/excel-to-pdf", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-600/10 to-green-700/5", category: "Convert to PDF" as Category },
+  { id: "html-to-pdf", name: "HTML to PDF", description: "Convert HTML files to PDF documents.", icon: Code, path: "/html-to-pdf", color: "text-indigo-500", bg: "bg-indigo-50", gradient: "from-indigo-500/10 to-indigo-600/5", category: "Convert to PDF" as Category },
 
-  { id: "pdf-to-images", name: "PDF to JPG", description: "Convert each PDF page into a JPG image.", icon: ImageDown, path: "/pdf-to-images", color: "text-amber-500", bg: "bg-amber-50", category: "Convert from PDF" as Category },
-  { id: "pdf-to-word", name: "PDF to WORD", description: "Convert PDF files to editable Word documents.", icon: FileDown, path: "/pdf-to-word", color: "text-blue-600", bg: "bg-blue-50", category: "Convert from PDF" as Category },
-  { id: "pdf-to-powerpoint", name: "PDF to POWERPOINT", description: "Convert PDF to editable PowerPoint presentations.", icon: FileUp, path: "/pdf-to-powerpoint", color: "text-orange-600", bg: "bg-orange-50", category: "Convert from PDF" as Category },
-  { id: "pdf-to-excel", name: "PDF to EXCEL", description: "Extract data from PDF into Excel spreadsheets.", icon: Sheet, path: "/pdf-to-excel", color: "text-green-600", bg: "bg-green-50", category: "Convert from PDF" as Category },
-  { id: "pdf-to-pdfa", name: "PDF to PDF/A", description: "Convert PDF to PDF/A for long-term archiving.", icon: ShieldCheck, path: "/pdf-to-pdfa", color: "text-teal-600", bg: "bg-teal-50", category: "Convert from PDF" as Category },
+  { id: "pdf-to-images", name: "PDF to JPG", description: "Convert each PDF page into a JPG image.", icon: ImageDown, path: "/pdf-to-images", color: "text-amber-500", bg: "bg-amber-50", gradient: "from-amber-500/10 to-amber-600/5", category: "Convert from PDF" as Category },
+  { id: "pdf-to-word", name: "PDF to WORD", description: "Convert PDF files to editable Word documents.", icon: FileDown, path: "/pdf-to-word", color: "text-blue-600", bg: "bg-blue-50", gradient: "from-blue-600/10 to-blue-700/5", category: "Convert from PDF" as Category },
+  { id: "pdf-to-powerpoint", name: "PDF to POWERPOINT", description: "Convert PDF to editable PowerPoint presentations.", icon: FileUp, path: "/pdf-to-powerpoint", color: "text-orange-600", bg: "bg-orange-50", gradient: "from-orange-600/10 to-orange-700/5", category: "Convert from PDF" as Category },
+  { id: "pdf-to-excel", name: "PDF to EXCEL", description: "Extract data from PDF into Excel spreadsheets.", icon: Sheet, path: "/pdf-to-excel", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-600/10 to-green-700/5", category: "Convert from PDF" as Category },
+  { id: "pdf-to-pdfa", name: "PDF to PDF/A", description: "Convert PDF to PDF/A for long-term archiving.", icon: ShieldCheck, path: "/pdf-to-pdfa", color: "text-teal-600", bg: "bg-teal-50", gradient: "from-teal-600/10 to-teal-700/5", category: "Convert from PDF" as Category },
 
-  { id: "rotate", name: "Rotate PDF", description: "Rotate your PDFs the way you need them.", icon: RotateCw, path: "/rotate", color: "text-indigo-500", bg: "bg-indigo-50", category: "Edit" as Category },
-  { id: "page-numbers", name: "Add page numbers", description: "Add page numbers into PDFs with ease.", icon: ListOrdered, path: "/page-numbers", color: "text-teal-500", bg: "bg-teal-50", category: "Edit" as Category },
-  { id: "watermark", name: "Add watermark", description: "Stamp an image or text over your PDF.", icon: Droplet, path: "/watermark", color: "text-cyan-500", bg: "bg-cyan-50", category: "Edit" as Category },
-  { id: "crop", name: "Crop PDF", description: "Trim the margins of your PDF pages.", icon: Crop, path: "/crop", color: "text-lime-600", bg: "bg-lime-50", category: "Edit" as Category },
-  { id: "edit-pdf", name: "Edit PDF", description: "Add text annotations to your PDF.", icon: Pencil, path: "/edit-pdf", color: "text-fuchsia-500", bg: "bg-fuchsia-50", category: "Edit" as Category },
+  { id: "rotate", name: "Rotate PDF", description: "Rotate your PDFs the way you need them.", icon: RotateCw, path: "/rotate", color: "text-indigo-500", bg: "bg-indigo-50", gradient: "from-indigo-500/10 to-indigo-600/5", category: "Edit" as Category },
+  { id: "page-numbers", name: "Add page numbers", description: "Add page numbers into PDFs with ease.", icon: ListOrdered, path: "/page-numbers", color: "text-teal-500", bg: "bg-teal-50", gradient: "from-teal-500/10 to-teal-600/5", category: "Edit" as Category },
+  { id: "watermark", name: "Add watermark", description: "Stamp an image or text over your PDF.", icon: Droplet, path: "/watermark", color: "text-cyan-500", bg: "bg-cyan-50", gradient: "from-cyan-500/10 to-cyan-600/5", category: "Edit" as Category },
+  { id: "crop", name: "Crop PDF", description: "Trim the margins of your PDF pages.", icon: Crop, path: "/crop", color: "text-lime-600", bg: "bg-lime-50", gradient: "from-lime-600/10 to-lime-700/5", category: "Edit" as Category },
+  { id: "edit-pdf", name: "Edit PDF", description: "Add text annotations to your PDF.", icon: Pencil, path: "/edit-pdf", color: "text-fuchsia-500", bg: "bg-fuchsia-50", gradient: "from-fuchsia-500/10 to-fuchsia-600/5", category: "Edit" as Category },
 
-  { id: "unlock", name: "Unlock PDF", description: "Remove PDF password security.", icon: Unlock, path: "/unlock", color: "text-emerald-500", bg: "bg-emerald-50", category: "Security" as Category },
-  { id: "protect", name: "Protect PDF", description: "Encrypt your PDF with a password.", icon: Lock, path: "/protect", color: "text-rose-500", bg: "bg-rose-50", category: "Security" as Category },
-  { id: "sign", name: "Sign PDF", description: "Add your signature to any PDF document.", icon: PenTool, path: "/sign", color: "text-violet-600", bg: "bg-violet-50", category: "Security" as Category },
-  { id: "redact", name: "Redact PDF", description: "Black out sensitive information.", icon: EyeOff, path: "/redact", color: "text-red-600", bg: "bg-red-50", category: "Security" as Category },
-  { id: "compare", name: "Compare PDF", description: "Compare two PDFs and find differences.", icon: GitCompare, path: "/compare", color: "text-amber-600", bg: "bg-amber-50", category: "Security" as Category },
+  { id: "unlock", name: "Unlock PDF", description: "Remove PDF password security.", icon: Unlock, path: "/unlock", color: "text-emerald-500", bg: "bg-emerald-50", gradient: "from-emerald-500/10 to-emerald-600/5", category: "Security" as Category },
+  { id: "protect", name: "Protect PDF", description: "Encrypt your PDF with a password.", icon: Lock, path: "/protect", color: "text-rose-500", bg: "bg-rose-50", gradient: "from-rose-500/10 to-rose-600/5", category: "Security" as Category },
+  { id: "sign", name: "Sign PDF", description: "Add your signature to any PDF document.", icon: PenTool, path: "/sign", color: "text-violet-600", bg: "bg-violet-50", gradient: "from-violet-600/10 to-violet-700/5", category: "Security" as Category },
+  { id: "redact", name: "Redact PDF", description: "Black out sensitive information.", icon: EyeOff, path: "/redact", color: "text-red-600", bg: "bg-red-50", gradient: "from-red-600/10 to-red-700/5", category: "Security" as Category },
+  { id: "compare", name: "Compare PDF", description: "Compare two PDFs and find differences.", icon: GitCompare, path: "/compare", color: "text-amber-600", bg: "bg-amber-50", gradient: "from-amber-600/10 to-amber-700/5", category: "Security" as Category },
 
-  { id: "ai-summarize", name: "AI Summarizer", description: "Get an AI-powered summary of your PDF.", icon: Sparkles, path: "/ai-summarize", color: "text-purple-600", bg: "bg-purple-50", category: "AI" as Category },
-  { id: "translate", name: "Translate PDF", description: "Translate your PDF to any language using AI.", icon: Languages, path: "/translate", color: "text-sky-600", bg: "bg-sky-50", category: "AI" as Category },
+  { id: "ai-summarize", name: "AI Summarizer", description: "Get an AI-powered summary of your PDF.", icon: Sparkles, path: "/ai-summarize", color: "text-purple-600", bg: "bg-purple-50", gradient: "from-purple-600/10 to-purple-700/5", category: "AI" as Category },
+  { id: "translate", name: "Translate PDF", description: "Translate your PDF to any language using AI.", icon: Languages, path: "/translate", color: "text-sky-600", bg: "bg-sky-50", gradient: "from-sky-600/10 to-sky-700/5", category: "AI" as Category },
 ];
+
+const popularToolIds = ["merge", "compress", "split", "ai-summarize", "translate", "pdf-to-word"];
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -64,50 +77,122 @@ export default function Home() {
     return matchesCategory && matchesSearch;
   });
 
+  const popularTools = allTools.filter(t => popularToolIds.includes(t.id));
+  const showHero = !search && activeCategory === "All";
+
   return (
     <Layout>
-      <div className="container mx-auto px-4 pt-10 pb-4">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4" data-testid="heading-home">
-          Every tool you need to work with PDFs
-        </h1>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-primary/8 to-transparent rounded-full blur-3xl opacity-50 pointer-events-none" />
+        
+        <div className="container mx-auto px-4 pt-12 pb-6 relative">
+          {showHero && (
+            <div className="text-center mb-10 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Now powered by Mistral AI</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-4 leading-tight" data-testid="heading-home">
+                Every tool you need to{" "}
+                <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                  work with PDFs
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Merge, split, compress, convert, edit, sign, and transform your PDF files. 
+                Free, fast, and powered by AI.
+              </p>
+            </div>
+          )}
 
-        <div className="relative max-w-xl mb-8">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-muted-foreground" />
+          <div className="relative max-w-2xl mx-auto mb-8">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <input
+              type="search"
+              placeholder="What do you want to do with your PDF?"
+              className="flex h-14 w-full rounded-2xl border-2 border-input bg-card pl-13 pr-5 py-2 text-base shadow-lg shadow-black/5 transition-all placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary focus-visible:shadow-primary/10"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              data-testid="input-search-tools"
+            />
           </div>
-          <input
-            type="search"
-            placeholder="Search for a PDF tool..."
-            className="flex h-12 w-full rounded-xl border border-input bg-muted/50 pl-12 pr-4 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            data-testid="input-search-tools"
-          />
-        </div>
 
-        <div className="flex flex-wrap gap-2 mb-8" data-testid="category-filters">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === cat
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-              data-testid={`filter-${cat}`}
-            >
-              {cat}
-            </button>
-          ))}
+          {showHero && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl mx-auto mb-8">
+              {popularTools.map((tool) => {
+                const Icon = tool.icon;
+                return (
+                  <Link
+                    key={tool.id}
+                    href={tool.path}
+                    className={`group flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r ${tool.gradient} border border-transparent hover:border-primary/30 transition-all duration-200 hover:shadow-md`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tool.bg} ${tool.color} shrink-0 group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                      {tool.name}
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {showHero && (
+            <div className="flex items-center justify-center gap-8 md:gap-12 mb-10 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-500" />
+                <span>31 PDF Tools</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-green-500" />
+                <span>Secure Processing</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-500" />
+                <span>AI-Powered</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="container mx-auto px-4 pb-12">
+      <div className="container mx-auto px-4 pb-4">
+        <div className="flex flex-wrap justify-center gap-2 mb-8" data-testid="category-filters">
+          {categories.map((cat) => {
+            const CatIcon = categoryIcons[cat];
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25 scale-105"
+                    : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-foreground hover:shadow-sm"
+                }`}
+                data-testid={`filter-${cat}`}
+              >
+                <CatIcon className="w-3.5 h-3.5" />
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 pb-16">
         {filteredTools.length === 0 ? (
-          <div className="text-center py-12" data-testid="empty-search">
-            <h3 className="text-xl font-medium text-foreground">No tools found</h3>
-            <p className="text-muted-foreground mt-2">Try adjusting your search or filter.</p>
+          <div className="text-center py-16" data-testid="empty-search">
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <Search className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No tools found</h3>
+            <p className="text-muted-foreground">Try a different search term or category.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="tools-grid">
@@ -117,19 +202,21 @@ export default function Home() {
                 <Link 
                   key={tool.id} 
                   href={tool.path}
-                  className="group flex items-start gap-4 p-5 bg-card rounded-xl border hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                  className="group relative flex flex-col p-5 bg-card rounded-2xl border border-border/80 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5"
                   data-testid={`link-tool-${tool.id}`}
                 >
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${tool.bg} ${tool.color} group-hover:scale-110 transition-transform duration-200`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${tool.bg} ${tool.color} group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
                     <Icon className="w-6 h-6" />
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                      {tool.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {tool.description}
-                    </p>
+                  <h3 className="font-semibold text-foreground mb-1.5 group-hover:text-primary transition-colors">
+                    {tool.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                    {tool.description}
+                  </p>
+                  <div className="flex items-center gap-1 mt-3 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span>Use tool</span>
+                    <ArrowRight className="w-3 h-3" />
                   </div>
                 </Link>
               );
