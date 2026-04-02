@@ -258,7 +258,7 @@ export default function Home() {
             <div className="text-center mb-10 max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Now powered by Mistral AI</span>
+                <span>Now powered by AI</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-4 leading-tight" data-testid="heading-home">
                 Every tool you need to{" "}
@@ -315,7 +315,6 @@ export default function Home() {
           )}
         </div>
       </div>
-
       <div className="container mx-auto px-4 pb-4">
         <div className="flex flex-wrap justify-center gap-2 mb-8" data-testid="category-filters">
           {categories.map((cat) => {
@@ -338,7 +337,6 @@ export default function Home() {
           })}
         </div>
       </div>
-
       <div className="container mx-auto px-4 pb-16">
         {filteredTools.length === 0 ? (
           <div className="text-center py-16" data-testid="empty-search">
